@@ -40,7 +40,10 @@ fn main() {
     let mut edit_game_settings = false;
     let mut design_world = true;
     let mut is_game_running = true;
-    
+
+    // @TODO make these values for world size allowed to passed in via args
+    // @TODO also make the values editable during the game loop, they can already be resized
+    // safely just need to add keybindings.
     let mut world = World::new(
         125,
         125,
@@ -48,7 +51,7 @@ fn main() {
         50,
         48
     );
-    let mut design_world_instance = DesignWorld::new(50, 50);
+    let mut design_world_instance = DesignWorld::new(125, 125);
     
     let mut current_generation = 1;
     let mut how_long_we_slept = 0;
@@ -135,7 +138,7 @@ fn main() {
 
             // handle update
             handle_gameplay_loop(&mut world);
-            how_long_generation_took = (now.elapsed().as_millis() as i128) - how_long_rendering_took;
+            how_long_generation_took = (now.elapsed().as_millis() as i128) - (how_long_rendering_took + world.allotted_read_input_time as i128);
 
             current_generation += 1;
             sleep_duration_ms = world.sleep_duration;
@@ -276,13 +279,20 @@ fn render_game_world(
 ) {
     execute!(stdout, Clear(ClearType::FromCursorUp), cursor::MoveTo(0, 0), Print(
         format!(
-            "Current generation: {}\nThread slept for {}ms. Last frame took: {}ms. Rendering took {}ms, generation_took: {}ms Requested frame interval: {}\n",
+            "Current generation: {}\n  \
+             Last frame took: {}ms\n  \
+             Slept for {}ms\n  \
+             Rendering took {}ms\n  \
+             Generation_took: {}ms\n  \
+             Read_time: {}ms\n  \
+             Requested frame interval: {}\n",
             current_generation,
             how_long_we_slept,
             how_long_a_frame_took,
             how_long_rendering_took,
             how_long_generation_took,
-            world.sleep_duration
+            world.allotted_read_input_time,
+            world.sleep_duration,
         ),
     )).unwrap();
     GameWorldDisplay::print_chunk(&world);

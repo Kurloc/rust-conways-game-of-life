@@ -15,16 +15,14 @@ impl GameWorldDisplay {
     pub fn print_chunk(world: &World) {
         let chunk_address = world.current_chunk_address;
         print!(
-            "Chunk: ({}, {}) of ({}, {}) :: WorldSize: {}x{} :: TilesVisible: {}\nallotted_read_time: {}, total_sleep: {}\n",
+            "Chunk: ({}, {}) of ({}, {}) :: WorldSize: {}x{} :: TilesVisible: {}\n",
             chunk_address.0,
             chunk_address.1,
             (world.x_size / world.chunk_x_size) - 1,
             (world.y_size / world.chunk_y_size) - 1,
             world.x_size,
             world.y_size,
-            world.chunk_y_size * world.chunk_x_size,
-            world.allotted_read_input_time,
-            world.sleep_duration
+            world.chunk_y_size * world.chunk_x_size
         );
         let iter_chunk_x = world.chunk_x_size - 1;
         for y in 0..world.chunk_y_size {
