@@ -1,0 +1,12 @@
+[package]
+name = "conways_game_of_life"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[dependencies]
+crossterm = "0.25.0"
+test-case = "2.2.2"
+pad = "0.1.2"
