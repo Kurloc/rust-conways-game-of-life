@@ -45,24 +45,27 @@ fn main() {
     // @TODO also make the values editable during the game loop, they can already be resized
     // safely just need to add keybindings.
     let mut world = World::new(
-        125,
-        125,
+        250,
+        250,
+        75,
         50,
-        50,
-        48
+        36,
+        0
     );
-    let mut design_world_instance = DesignWorld::new(125, 125);
+    let mut design_world_instance = DesignWorld::new(125, 50);
     
     let mut current_generation = 1;
     let mut how_long_we_slept = 0;
     let mut how_long_rendering_took = 0;
     let mut how_long_generation_took = 0;
+    let mut how_long_input_took = 0;
     let mut how_long_a_frame_took = 0;
     let mut sleep_duration_ms;
     
     execute!(stdout, cursor::Hide, Print("")).unwrap();
     while is_game_running {
-        let now = Instant::now();
+        let now_total = Instant::now();
+        let mut now = Instant::now();
         if edit_game_settings {
             // @TODO: Add more stuff here to edit game values like:
             //      world.x_size
@@ -95,13 +98,13 @@ fn main() {
             sleep_duration_ms = 10;
         }
         else if design_world {
+            let now = Instant::now();
             // @TODO: Add more functionality here for editing, mainly QOL life stuff
             //      1) Ability to copy a section and paste it else where on the world
             //      2) Clear the design map, so you don't need to reset the app to clear it or untoggle everything manually.
 
             // Render
             DesignWorldDisplay::print_design_world(&mut stdout, &design_world_instance);
-            how_long_a_frame_took = now.elapsed().as_millis() as i128;
 
             // handle input
             (is_game_running, design_world, edit_game_settings) = handle_design_world_input(
@@ -113,7 +116,10 @@ fn main() {
                 world.reset_game_world(design_world_instance.marked_positions.iter());
                 current_generation = 1;
             }
-            sleep_duration_ms = 10;
+            sleep_duration_ms = (32 as i32) - (now.elapsed().as_millis() as i32);
+            if sleep_duration_ms < 0 {
+                sleep_duration_ms = 0;
+            }
         }
         else {
             // Render
@@ -123,13 +129,17 @@ fn main() {
                 how_long_a_frame_took,
                 how_long_rendering_took,
                 how_long_generation_took,
+                how_long_input_took,
                 &world,
                 &mut stdout
             );
             how_long_rendering_took = now.elapsed().as_millis() as i128;
+            now = Instant::now();
             
             // handle input
             (is_game_running, design_world, reset_game) = handle_game_play_input(&mut world);
+            how_long_input_took = now.elapsed().as_millis() as i128;
+            now = Instant::now();
             if reset_game {
                 world.reset_game_world(design_world_instance.marked_positions.iter());
                 current_generation = 1;
@@ -138,17 +148,18 @@ fn main() {
 
             // handle update
             handle_gameplay_loop(&mut world);
-            how_long_generation_took = (now.elapsed().as_millis() as i128) - (how_long_rendering_took + world.allotted_read_input_time as i128);
+            how_long_generation_took = now.elapsed().as_millis() as i128;
 
             current_generation += 1;
-            sleep_duration_ms = world.sleep_duration;
-            how_long_a_frame_took = how_long_rendering_took + how_long_generation_took;
+            sleep_duration_ms = world.frame_interval_ms as i32;
         }
 
+        how_long_a_frame_took = now_total.elapsed().as_millis() as i128;
         how_long_we_slept = (sleep_duration_ms as i128) - how_long_a_frame_took;
         if how_long_we_slept > 0 {
             sleep(Duration::from_millis(how_long_we_slept as u64));
         }
+        how_long_a_frame_took = how_long_a_frame_took + how_long_we_slept
     }
 
     execute!(stdout, Clear(ClearType::All), Print(empty_string)).unwrap();
@@ -274,25 +285,26 @@ fn render_game_world(
     how_long_a_frame_took: i128,
     how_long_rendering_took: i128,
     how_long_generation_took: i128,
+    how_long_input_took: i128,
     world: &World,
     stdout: &mut Stdout,
 ) {
     execute!(stdout, Clear(ClearType::FromCursorUp), cursor::MoveTo(0, 0), Print(
         format!(
             "Current generation: {}\n  \
-             Last frame took: {}ms\n  \
-             Slept for {}ms\n  \
+             Read_time: {}ms\n  \
              Rendering took {}ms\n  \
              Generation_took: {}ms\n  \
-             Read_time: {}ms\n  \
-             Requested frame interval: {}\n",
+             Sleep Time: {}ms\n  \
+             Requested frame interval: {}\n  \
+             Total Frame Time: {}ms\n",
             current_generation,
-            how_long_we_slept,
-            how_long_a_frame_took,
+            how_long_input_took,
             how_long_rendering_took,
             how_long_generation_took,
-            world.allotted_read_input_time,
-            world.sleep_duration,
+            how_long_we_slept,
+            world.frame_interval_ms,
+            how_long_a_frame_took
         ),
     )).unwrap();
     GameWorldDisplay::print_chunk(&world);
