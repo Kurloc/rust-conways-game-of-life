@@ -36,7 +36,7 @@ fn main() {
     enable_raw_mode().unwrap();
     let mut stdout = stdout();
 
-    let mut reset_game = false;
+    let mut reset_game: bool;
     let mut edit_game_settings = false;
     let mut design_world = true;
     let mut is_game_running = true;
