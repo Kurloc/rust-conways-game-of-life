@@ -44,8 +44,8 @@ impl DesignWorld {
 
         let original_chunk_x = self.current_position.0;
         let original_chunk_y = self.current_position.1;
-        let mut new_x = (original_chunk_x as i16) + (adjustment_amount.0 as i16);
-        let mut new_y = (original_chunk_y as i16) + (adjustment_amount.1 as i16);
+        let new_x = (original_chunk_x as i16) + (adjustment_amount.0 as i16);
+        let new_y = (original_chunk_y as i16) + (adjustment_amount.1 as i16);
         if new_x == 0
             || new_y == 0
             || new_x < 0

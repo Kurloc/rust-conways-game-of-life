@@ -18,7 +18,7 @@ pub struct World {
     pub chunk_y_size: usize,
     pub current_chunk_address: (i32, i32),
     pub allotted_read_input_time: usize,
-    pub sleep_duration: usize,
+    pub frame_interval_ms: usize,
 }
 
 impl World {
@@ -26,7 +26,8 @@ impl World {
                y_size: usize,
                chunk_x_size: usize,
                chunk_y_size: usize,
-               sleep_duration: usize,
+               frame_interval_ms: usize,
+               allotted_read_input_time: usize
     ) -> World {
         let mut tiles = HashMap::new();
         let alive_tile_keys = HashMap::new();
@@ -48,9 +49,21 @@ impl World {
             alive_tile_keys,
             current_chunk_address: (0, 0),
             allotted_read_input_time: (
-                if is_chunk_1_by_1 { 10 } else { sleep_duration / 5 }
+                if is_chunk_1_by_1 {
+                    if allotted_read_input_time == 0 {
+                        0
+                    } else {
+                        10
+                    }
+                } else {
+                    if allotted_read_input_time == 0 {
+                        0
+                    } else {
+                        frame_interval_ms / 5
+                    }
+                }
             ),
-            sleep_duration,
+            frame_interval_ms,
         };
     }
 
